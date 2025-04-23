@@ -1,8 +1,12 @@
 from pymongo import MongoClient
 from app.config import settings
+import logging
 
-print("🔄 Connecting to MongoDB...")
-print(f"🔄 Database: {settings.DB_NAME}")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+logger.info("🔄 Connecting to MongoDB...")
+logger.info(f"🔄 Database: {settings.DB_NAME}")
 
 client = MongoClient(settings.MONGODB_URI)
 db = client[settings.DB_NAME]
@@ -10,7 +14,7 @@ db = client[settings.DB_NAME]
 # Test connection
 try:
     db.command("ping")
-    print("✅ MongoDB connection successful!")
+    logger.info("✅ MongoDB connection successful!")
 except Exception as e:
-    print(f"❌ Connection failed: {e}")
+    logger.error(f"❌ Connection failed: {e}")
     raise
