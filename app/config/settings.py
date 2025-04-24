@@ -10,9 +10,12 @@ if not ENV_PATH.exists():
 
 load_dotenv(ENV_PATH, override=True)
 
-# Database settings
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://vodintech:ia7m4AaQ8TlMyWid@cluster0.ratvxur.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-DB_NAME = os.getenv("DB_NAME", "carbrands")
+# Database settings - no default values for security
+MONGODB_URI = os.getenv("MONGODB_URI")
+if not MONGODB_URI:
+    raise ValueError("MONGODB_URI environment variable not set")
+
+DB_NAME = os.getenv("DB_NAME", "carbrands")  # Default okay for DB_NAME
 
 # Media settings
 BASE_DIR = Path(__file__).resolve().parent.parent.parent

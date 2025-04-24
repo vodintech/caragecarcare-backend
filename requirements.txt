@@ -1,4 +1,6 @@
 fastapi
 uvicorn
-pymongo
 python-dotenv
+pymongo
+certifi
+python-multipart
