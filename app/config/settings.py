@@ -3,12 +3,7 @@ from pathlib import Path
 import os
 
 # Load environment variables
-ENV_PATH = Path(__file__).resolve().parent.parent.parent / ".env"
-
-if not ENV_PATH.exists():
-    raise FileNotFoundError(f"❌ .env not found at: {ENV_PATH}")
-
-load_dotenv(ENV_PATH, override=True)
+load_dotenv()
 
 # Database settings - no default values for security
 MONGODB_URI = os.getenv("MONGODB_URI")
