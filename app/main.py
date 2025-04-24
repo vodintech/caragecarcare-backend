@@ -14,7 +14,10 @@ app = FastAPI()
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://caragecarcare.vercel.app/"],  # For development, restrict in production
+    allow_origins=[
+        "https://caragecarcare.vercel.app",
+        "http://localhost:3000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
