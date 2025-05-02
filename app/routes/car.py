@@ -170,11 +170,31 @@ async def get_all_brands():
         logger.error(f"Error getting all brands: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+from fastapi import Response
+
 @router.post("/submit-request")
-async def submit_request(request: CarRequest):
+async def submit_request(request: CarRequest, response: Response):
     try:
-        result = db.requests.insert_one(request.dict())
-        return {"message": "Request submitted successfully", "id": str(result.inserted_id)}
+        request_data = {
+            "brand": request.brand,
+            "model": request.model,
+            "fuelType": request.fuelType,
+            "year": request.year,
+            "phone": request.phone,
+            "createdAt": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+        }
+        
+        # Manually set CORS headers
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "POST"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        
+        result = db.requests.insert_one(request_data)
+        return {
+            "message": "Request submitted successfully",
+            "id": str(result.inserted_id)
+        }
+        
     except Exception as e:
-        logger.error(f"Error submitting request: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

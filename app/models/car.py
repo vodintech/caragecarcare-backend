@@ -14,4 +14,6 @@ class CarBrand(BaseModel):
 class CarRequest(BaseModel):
     brand: str
     model: str
+    fuelType: str
+    year: str
     phone: str
