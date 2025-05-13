@@ -31,7 +31,7 @@ class ServiceHierarchyResponse(BaseModel):
     categories: List[ServiceCategory]
     lastUpdated: datetime = None
 
-@router.get("/service-hierarchy", response_model=ServiceHierarchyResponse)
+@router.get("/service-hierarchy")
 async def get_service_hierarchy():
     try:
         hierarchy = db.service_hierarchy.find_one({"type": "service_hierarchy"})
