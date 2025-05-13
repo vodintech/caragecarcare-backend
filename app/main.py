@@ -47,7 +47,7 @@ def root():
 logger.info(f"📁 Media root: {settings.MEDIA_ROOT}")
 logger.info(f"🌐 Media URL: {settings.MEDIA_URL}")
 
-app.include_router(service_router, prefix="/api")
+app.include_router(service_router)
 @app.get("/")
 def read_root():
     return {"message": "Service Hierarchy API is running"}
