@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.car import router as car_router
 from app.config import settings
+from app.routes.service import router as service_router
 import os
 import logging
 
@@ -45,3 +46,8 @@ def root():
 
 logger.info(f"📁 Media root: {settings.MEDIA_ROOT}")
 logger.info(f"🌐 Media URL: {settings.MEDIA_URL}")
+
+app.include_router(service_router, prefix="/api")
+@app.get("/")
+def read_root():
+    return {"message": "Service Hierarchy API is running"}
