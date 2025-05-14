@@ -4,57 +4,68 @@ from bson import ObjectId
 from datetime import datetime
 import logging
 from pydantic import BaseModel
-from typing import Dict, List ,Optional
+from typing import List, Optional
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 # Response Models
+class Part(BaseModel):
+    name: str
+    image: Optional[str] = None
+
 class SubItem(BaseModel):
     name: str
     image: Optional[str] = None
-    parts: List[str] = []
-    
+    parts: List[Part] = []
+
 class ServiceItem(BaseModel):
     name: str
-    subItems: List[str] = []
-    subSubItems: Dict[str, List[str]] = {}
+    image: Optional[str] = None
+    subItems: List[SubItem] = []
 
 class ServiceCategory(BaseModel):
     name: str
-    icon: str = ""
+    icon: str
     items: List[ServiceItem] = []
 
 class ServiceHierarchyResponse(BaseModel):
-    _id: str
-    type: str
     categories: List[ServiceCategory]
-    lastUpdated: datetime = None
+    lastUpdated: datetime
 
 @router.get("/service-hierarchy")
 async def get_service_hierarchy():
     try:
-        hierarchy = db.service_hierarchy.find_one({"type": "service_hierarchy"})
+        # Get all category documents
+        categories = list(db.service_hierarchy.find({"type": "service_category"}))
         
-        if not hierarchy:
-            raise HTTPException(
-                status_code=404,
-                detail="Service hierarchy not found"
+        if not categories:
+            logger.warning("No service categories found in database")
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "categories": [],
+                    "lastUpdated": datetime.utcnow().isoformat()
+                }
             )
             
-        hierarchy['_id'] = str(hierarchy['_id'])
-        
-        # Ensure all items have required fields
-        for category in hierarchy.get('categories', []):
-            for item in category.get('items', []):
-                item.setdefault('subItems', [])
-                item.setdefault('subSubItems', {})
-        
-        return hierarchy
+        # Convert ObjectId to string for JSON serialization
+        for category in categories:
+            category["_id"] = str(category["_id"])
+            for item in category.get("items", []):
+                for subItem in item.get("subItems", []):
+                    for part in subItem.get("parts", []):
+                        if "_id" in part:
+                            part["_id"] = str(part["_id"])
+
+        return {
+            "categories": categories,
+            "lastUpdated": datetime.utcnow().isoformat()
+        }
         
     except Exception as e:
-        logger.error(f"Database error: {str(e)}")
+        logger.error(f"Database error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="Failed to fetch service hierarchy"
+            detail=str(e)  # Return the actual error message for debugging
         )
