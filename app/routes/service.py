@@ -1,72 +1,69 @@
-from fastapi import APIRouter, HTTPException
+# service.py (updated)
+from fastapi import APIRouter, HTTPException, Query, Body
 from app.database.connection import db
 from fastapi.responses import JSONResponse
 from bson import ObjectId
-from datetime import datetime
 import logging
+from typing import Optional, List
 from pydantic import BaseModel
-from typing import List, Optional
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Response Models
-class Part(BaseModel):
+class ServicePackage(BaseModel):
     name: str
-    image: Optional[str] = None
+    price: float
+    discountedPrice: float
+    warranty: str
+    interval: str
+    services: List[str]
+    duration: str
+    recommended: Optional[bool] = False
 
-class SubItem(BaseModel):
-    name: str
-    image: Optional[str] = None
-    parts: List[Part] = []
-
-class ServiceItem(BaseModel):
-    name: str
-    image: Optional[str] = None
-    subItems: List[SubItem] = []
-
-class ServiceCategory(BaseModel):
-    name: str
-    icon: str
-    items: List[ServiceItem] = []
-
-class ServiceHierarchyResponse(BaseModel):
-    categories: List[ServiceCategory]
-    lastUpdated: datetime
-
-@router.get("/service-hierarchy")
-async def get_service_hierarchy():
+@router.get("/service-categories")
+async def get_service_categories():
     try:
-        # Get all category documents
-        categories = list(db.service_hierarchy.find({"type": "service_category"}))
+        categories = list(db.service_categories.find({}, {"_id": 0, "name": 1, "icon": 1}))
+        return categories
+    except Exception as e:
+        logger.error(f"Error getting categories: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/service-packages")
+async def get_service_packages(category: str = Query(...)):
+    try:
+        packages = list(db.service_packages.find({"category": category}, {"_id": 0}))
         
-        if not categories:
-            logger.warning("No service categories found in database")
+        if not packages:
             return JSONResponse(
-                status_code=200,
-                content={
-                    "categories": [],
-                    "lastUpdated": datetime.utcnow().isoformat()
-                }
+                status_code=404,
+                content={"message": f"No packages found for category: {category}"}
             )
             
-        # Convert ObjectId to string for JSON serialization
-        for category in categories:
-            category["_id"] = str(category["_id"])
-            for item in category.get("items", []):
-                for subItem in item.get("subItems", []):
-                    for part in subItem.get("parts", []):
-                        if "_id" in part:
-                            part["_id"] = str(part["_id"])
-
-        return {
-            "categories": categories,
-            "lastUpdated": datetime.utcnow().isoformat()
-        }
-        
+        return packages
     except Exception as e:
-        logger.error(f"Database error: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)  # Return the actual error message for debugging
+        logger.error(f"Error getting packages: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/service-packages")
+async def create_service_package(package: ServicePackage):
+    try:
+        result = db.service_packages.insert_one(package.dict())
+        return {"id": str(result.inserted_id), "message": "Package created successfully"}
+    except Exception as e:
+        logger.error(f"Error creating package: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/service-packages/{package_name}")
+async def update_service_package(package_name: str, package: ServicePackage):
+    try:
+        result = db.service_packages.update_one(
+            {"name": package_name},
+            {"$set": package.dict()}
         )
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Package not found")
+        return {"message": "Package updated successfully"}
+    except Exception as e:
+        logger.error(f"Error updating package: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

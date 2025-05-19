@@ -41,6 +41,7 @@ app.mount(
 
 # Include routes
 app.include_router(car_router, prefix="/car", tags=["Car"])
+app.include_router(service_router, prefix="/api")
 
 @app.get("/")
 def root():
