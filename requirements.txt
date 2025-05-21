@@ -4,3 +4,4 @@ python-dotenv
 pymongo
 certifi
 python-multipart
+httpx>=0.23.0

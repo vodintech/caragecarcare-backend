@@ -50,7 +50,7 @@ async def keep_alive():
             logger.info("Keep-alive ping successful")
         except Exception as e:
             logger.error(f"Keep-alive ping failed: {e}")
-        await asyncio.sleep(300)  # Ping every 5 minutes
+        await asyncio.sleep(1800)  # Ping every # minutes
 
 @app.on_event("startup")
 async def startup_event():
