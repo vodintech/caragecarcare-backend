@@ -29,15 +29,22 @@ async def get_service_categories():
         logger.error(f"Error getting categories: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+from urllib.parse import unquote
+
 @router.get("/service-packages")
 async def get_service_packages(category: str = Query(...)):
     try:
-        packages = list(db.service_packages.find({"category": category}, {"_id": 0}))
+        # Decode the URL-encoded category (handles %26 -> &)
+        decoded_category = unquote(category)
+        packages = list(db.service_packages.find(
+            {"category": {"$regex": f"^{decoded_category}$", "$options": "i"}},
+            {"_id": 0}
+        ))
         
         if not packages:
             return JSONResponse(
                 status_code=404,
-                content={"message": f"No packages found for category: {category}"}
+                content={"message": f"No packages found for category: {decoded_category}"}
             )
             
         return packages
