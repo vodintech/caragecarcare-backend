@@ -4,6 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes.car import router as car_router
 from app.config import settings
 from app.routes.service import router as service_router
+from fastapi import BackgroundTasks
+import httpx
+import asyncio
 import os
 import logging
 
@@ -38,6 +41,20 @@ app.mount(
     StaticFiles(directory=settings.MEDIA_ROOT),
     name="media"
 )
+
+async def keep_alive():
+    while True:
+        try:
+            async with httpx.AsyncClient() as client:
+                await client.get("https://caragecarcare-backend.onrender.com")
+            logger.info("Keep-alive ping successful")
+        except Exception as e:
+            logger.error(f"Keep-alive ping failed: {e}")
+        await asyncio.sleep(300)  # Ping every 5 minutes
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(keep_alive())
 
 # Include routes
 app.include_router(car_router, prefix="/car", tags=["Car"])
